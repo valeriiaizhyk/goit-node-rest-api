@@ -41,20 +41,13 @@ export const deleteContact = async (req, res, next) => {
 };
 
 export const createContact = async (req, res, next) => {
-  const data = {
-    name: req.body.name,
-    email: req.body.email,
-    phone: req.body.phone,
-  };
-
-  const userData = createContactSchema.validate(data);
-
-  if (userData.error) {
-    return res.status(400).json({ message: userData.error.message });
-  }
-
   try {
-    const newContact = await addContact(userData.value);
+    const { name, email, phone } = req.body;
+    const { error } = createContactSchema.validate(req.body);
+    if (error) {
+      throw new HttpError(400, error.message);
+    }
+    const newContact = await contactsService.addContact(name, email, phone);
     return res.status(201).json(newContact);
   } catch (error) {
     next(error);
@@ -81,12 +74,15 @@ export const updateContact = async (req, res, next) => {
   }
 
   try {
-    const updateContact = await updateContact(id, userData.value);
+    const updatedContact = await contactsService.updateContact(
+      id,
+      userData.value
+    );
 
-    if (!updateContact) {
+    if (!updatedContact) {
       throw new HttpError(404);
     }
-    return res.status(200).json(updateContact);
+    return res.status(200).json(updatedContact);
   } catch (error) {
     next(HttpError(404));
   }

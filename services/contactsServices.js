@@ -47,18 +47,13 @@ async function removeContact(contactId) {
   return removedContact;
 }
 
-async function addContact(contact) {
+async function addContact(name, email, phone) {
   const contacts = await readContacts();
 
-  const newContact = {
-    id: crypto.randomUUID(),
-    ...contact,
-  };
+  const newContact = { name, email, phone, id: crypto.randomUUID() };
 
   contacts.push(newContact);
-
   await writeContacts(contacts);
-
   return newContact;
 }
 
@@ -73,7 +68,7 @@ async function updateContact(contactId, data) {
 
     const updateContact = { ...contacts[index], ...data };
     contacts[index] = updateContact;
-    writeContacts(contacts);
+    await writeContacts(contacts);
     return updateContact;
   } catch (error) {
     console.log(error);
