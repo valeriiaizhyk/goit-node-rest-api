@@ -19,7 +19,7 @@ export const getOneContact = async (req, res, next) => {
     const { id } = req.params;
     const contact = await getContactById(id);
     if (!contact) {
-      throw new HttpError(404);
+      throw HttpError(404);
     }
     res.status(200).json(contact);
   } catch (error) {
@@ -32,7 +32,7 @@ export const deleteContact = async (req, res, next) => {
     const { id } = req.params;
     const removedContact = await removeContact(id);
     if (!removedContact) {
-      throw new HttpError(404);
+      throw HttpError(404);
     }
     res.status(200).json(removedContact);
   } catch (error) {
@@ -45,7 +45,7 @@ export const createContact = async (req, res, next) => {
     const { name, email, phone } = req.body;
     const { error } = createContactSchema.validate(req.body);
     if (error) {
-      throw new HttpError(400, error.message);
+      throw HttpError(400, error.message);
     }
     const newContact = await contactsService.addContact(name, email, phone);
     return res.status(201).json(newContact);
@@ -80,7 +80,7 @@ export const updateContact = async (req, res, next) => {
     );
 
     if (!updatedContact) {
-      throw new HttpError(404);
+      throw HttpError(404);
     }
     return res.status(200).json(updatedContact);
   } catch (error) {
