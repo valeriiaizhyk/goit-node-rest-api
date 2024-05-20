@@ -4,12 +4,12 @@ import {
   createContactSchema,
   updateContactSchema,
 } from "../schemas/contactsSchemas.js";
-import {Contact} from "../models/contacts.js";
+import { Contact } from "../models/contacts.js";
 
 export const getAllContacts = async (req, res, next) => {
   try {
     const contacts = await Contact.find();
-    res.status(200).json(contacts);
+    return res.status(200).json(contacts);
   } catch (error) {
     next(error);
   }
@@ -22,9 +22,9 @@ export const getOneContact = async (req, res, next) => {
     if (!contact) {
       throw HttpError(404);
     }
-    res.status(200).json(contact);
+    return res.status(200).json(contact);
   } catch (error) {
-    next(HttpError(404));
+    next(error);
   }
 };
 
@@ -35,20 +35,21 @@ export const deleteContact = async (req, res, next) => {
     if (!removedContact) {
       throw HttpError(404);
     }
-    res.status(200).json(removedContact);
+    return res.status(200).json(removedContact);
   } catch (error) {
     next(error);
   }
 };
 
 export const createContact = async (req, res, next) => {
+  const createContact = {
+    name: req.body.name,
+    email: req.body.email,
+    phone: req.body.phone,
+  };
+
   try {
-    const { name, email, phone } = req.body;
-    const { error } = createContactSchema.validate(req.body);
-    if (error) {
-      throw HttpError(400, error.message);
-    }
-    const newContact = await Contact.create(name, email, phone);
+    const newContact = await Contact.create(createContact);
     return res.status(201).json(newContact);
   } catch (error) {
     next(error);
@@ -75,9 +76,9 @@ export const updateContact = async (req, res, next) => {
   }
 
   try {
-    const updatedContact = await Contact.findByIdAndUpdate(
-      id,
-      req.body, {new: true});
+    const updatedContact = await Contact.findByIdAndUpdate(id, req.body, {
+      new: true,
+    });
 
     if (!updatedContact) {
       throw HttpError(404);
@@ -88,18 +89,18 @@ export const updateContact = async (req, res, next) => {
   }
 };
 
-export const updateFavorite = async( req, res, next) => {
-const {id} = req.params;
-try {
-  const updatedContact = await Contact.findByIdAndUpdate(
-    id,
-    req.body, {new: true});
+export const updateFavorite = async (req, res, next) => {
+  const { id } = req.params;
+  try {
+    const updatedContact = await Contact.findByIdAndUpdate(id, req.body, {
+      new: true,
+    });
 
-  if (!updatedContact) {
-    throw HttpError(404);
+    if (!updatedContact) {
+      throw HttpError(404);
+    }
+    return res.status(200).json(updatedContact);
+  } catch (error) {
+    next(error);
   }
-  return res.status(200).json(updatedContact);
-} catch (error) {
-  next(error);
-}
 };
