@@ -19,8 +19,8 @@ usersRouter.post(
   validateBody(userSchema),
   UsersController.login
 );
-usersRouter.post("/logout", jsonParser, authMiddleware, UsersController.logout);
-usersRouter.post(
+usersRouter.get("/logout", jsonParser, authMiddleware, UsersController.logout);
+usersRouter.get(
   "/current",
   jsonParser,
   authMiddleware,
