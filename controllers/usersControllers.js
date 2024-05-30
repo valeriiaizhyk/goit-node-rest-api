@@ -29,7 +29,7 @@ async function login(req, res, next) {
   const emailInLowerCase = email.toLowerCase();
 
   try {
-    const user = User.findOne({ email: emailInLowerCase });
+    const user = await User.findOne({ email: emailInLowerCase });
     if (!user) {
       return res
         .status(401)
