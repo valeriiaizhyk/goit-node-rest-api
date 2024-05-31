@@ -5,13 +5,13 @@ async function authMiddleware(req, res, next) {
   const authorizationHeader = req.headers.authorization;
 
   if (!authorizationHeader) {
-    return res.status(401).send({ message: "Not authorized" });
+    return next(HttpError(401, "Not authorized"));
   }
 
   const [bearer, token] = authorizationHeader.split(" ", 2);
 
   if (bearer !== "Bearer" || !token) {
-    return res.status(401).send({ message: "Not authorized" });
+    return next(HttpError(401, "Not authorized"));
   }
 
   try {
@@ -19,7 +19,7 @@ async function authMiddleware(req, res, next) {
     const user = await User.findById(decoded.id);
 
     if (!user || user.token !== token) {
-      return res.status(401).send({ message: "Not authorized" });
+      return next(HttpError(401, "Not authorized"));
     }
 
     req.user = {
@@ -29,7 +29,7 @@ async function authMiddleware(req, res, next) {
 
     next();
   } catch (error) {
-    return res.status(401).send({ message: "Not authorized" });
+    next(error);
   }
 }
 

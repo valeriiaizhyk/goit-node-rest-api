@@ -19,7 +19,7 @@ usersRouter.post(
   validateBody(userSchema),
   UsersController.login
 );
-usersRouter.get("/logout", jsonParser, authMiddleware, UsersController.logout);
+usersRouter.post("/logout", jsonParser, authMiddleware, UsersController.logout);
 usersRouter.get(
   "/current",
   jsonParser,

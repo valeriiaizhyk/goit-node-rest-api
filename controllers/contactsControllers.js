@@ -22,7 +22,7 @@ export const getOneContact = async (req, res, next) => {
   try {
     const contact = await Contact.findOne({ _id: id, owner: req.user.id });
     if (!contact) {
-      return res.status(404).send({ message: "Contact not found" });
+      throw HttpError(404);
     }
     res.status(200).send(contact);
   } catch (error) {
@@ -38,7 +38,7 @@ export const deleteContact = async (req, res, next) => {
       owner: req.user.id,
     });
     if (!removedContact) {
-      return res.status(404).send({ message: "Contact not found" });
+      throw HttpError(404);
     }
     res.status(200).send(removedContact);
   } catch (error) {
@@ -67,14 +67,12 @@ export const updateContact = async (req, res, next) => {
   const updateFields = req.body;
 
   if (!updateFields.name && !updateFields.email && !updateFields.phone) {
-    return res
-      .status(400)
-      .json({ message: "Body must have at least one field" });
+    throw HttpError(404);
   }
 
   const userData = updateContactSchema.validate(updateFields);
   if (userData.error) {
-    return res.status(400).json({ message: userData.error.message });
+    throw HttpError(404);
   }
 
   try {
@@ -85,7 +83,7 @@ export const updateContact = async (req, res, next) => {
     );
 
     if (!updatedContact) {
-      return res.status(404).send({ message: "Contact not found" });
+      throw HttpError(404);
     }
     return res.status(200).json(updatedContact);
   } catch (error) {
@@ -104,7 +102,7 @@ export const updateFavorite = async (req, res, next) => {
     );
 
     if (!updatedContact) {
-      return res.status(404).send({ message: "Contact not found" });
+      throw HttpError(404);
     }
     return res.status(200).json(updatedContact);
   } catch (error) {
