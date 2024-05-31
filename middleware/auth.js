@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import User from "../models/user.js";
+import HttpError from "../helpers/HttpError.js";
 
 async function authMiddleware(req, res, next) {
   const authorizationHeader = req.headers.authorization;

@@ -68,7 +68,14 @@ async function login(req, res, next) {
 
 async function logout(req, res, next) {
   try {
-    await User.findByIdAndUpdate(req.user.id, { token: null });
+    const user = await User.findOneAndUpdate(
+      { _id: req.user.id },
+      { token: null }
+    );
+
+    if (!user) {
+      throw HttpError(401, "Not authorized");
+    }
     res.status(204).end();
   } catch (error) {
     next(error);
