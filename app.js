@@ -7,6 +7,7 @@ import contactsRouter from "./routes/contactsRouter.js";
 import usersRouter from "./routes/usersRouter.js";
 import authMiddleware from "./middleware/auth.js";
 import "./db/db.js";
+import authRouter from "./routes/authRouter.js";
 
 const app = express();
 
@@ -15,7 +16,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use("/avatars", express.static(path.resolve("public/avatars")));
-
+app.use("/api/users", authRouter);
 app.use("/users", usersRouter);
 app.use("/api/contacts", authMiddleware, contactsRouter);
 

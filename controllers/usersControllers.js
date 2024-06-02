@@ -1,97 +1,24 @@
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import User from "../models/user.js";
 import HttpError from "../helpers/HttpError.js";
 import * as fs from "node:fs/promises";
 import path from "node:path";
-import gravatar from "gravatar";
 import jimp from "jimp";
+import crypto from "node:crypto";
+import sendMail from "../helpers/verifyEmail.js";
 
-async function register(req, res, next) {
-  const { email, password } = req.body;
-
-  const emailInLowerCase = email.toLowerCase();
-
-  try {
-    const user = await User.findOne({ email: emailInLowerCase });
-
-    if (user !== null) {
-      throw HttpError(404);
-    }
-
-    const passwordHash = await bcrypt.hash(password, 10);
-    const generatedGravatar = gravatar.url(emailInLowerCase);
-
-    await User.create({
-      email: emailInLowerCase,
-      password: passwordHash,
-      avatarURL: `http:${generatedGravatar}`,
-    });
-
-    res.status(201).send({ message: "Registration succesfully" });
-  } catch (error) {
-    next(error);
-  }
-}
-
-async function login(req, res, next) {
-  const { email, password } = req.body;
-  const emailInLowerCase = email.toLowerCase();
-
-  try {
-    const user = await User.findOne({ email: emailInLowerCase });
-    if (!user) {
-      throw HttpError(401, "Email or password is wrong");
-    }
-    const isMatch = await bcrypt.compare(password, user.password);
-
-    if (!isMatch) {
-      throw HttpError(401, "Email or password is wrong");
-    }
-
-    const token = jwt.sign(
-      {
-        id: user._id,
-        email: user.email,
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: "2 days" }
-    );
-
-    await User.findByIdAndUpdate(user._id, { token });
-    res.send({
-      token: token,
-      user: {
-        email: user.email,
-        subscription: user.subscription,
-      },
-    });
-  } catch (error) {
-    next(error);
-  }
-}
-
-async function logout(req, res, next) {
-  try {
-    const user = await User.findOneAndUpdate(
-      { _id: req.user.id },
-      { token: null }
-    );
-
-    if (!user) {
-      throw HttpError(401, "Not authorized");
-    }
-    res.status(204).end();
-  } catch (error) {
-    next(error);
-  }
-}
-
-async function getUser(req, res, next) {
+async function getAvatar(req, res, next) {
   try {
     const user = await User.findById(req.user.id);
-    const { email, subscription } = user;
-    res.status(200).send({ email, subscription });
+
+    if (!user) {
+      throw HttpError(404, "User not found");
+    }
+
+    if (!user.avatarURL) {
+      throw HttpError(404, "Avatar not found");
+    }
+
+    res.sendFile(path.resolve("public/avatar", user.avatarURL));
   } catch (error) {
     next(error);
   }
@@ -128,22 +55,61 @@ async function updateAvatar(req, res, next) {
   }
 }
 
-async function getAvatar(req, res, next) {
+async function verify(req, res, next) {
+  const { verificationToken } = req.params;
   try {
-    const user = await User.findById(req.user.id);
+    const user = User.findOneAndUpdate(
+      { verificationToken },
+      { verify: true, verificationToken: null }
+    );
 
     if (!user) {
-      throw HttpError(404, "user not found");
+      throw HttpError(404, "User not found");
     }
 
-    if (!user.avatarURL) {
-      throw HttpError(404, "Avatar not found");
-    }
-
-    res.sendFile(path.resolve("public/avatar", user.avatarURL));
+    res.status(200).json({ message: "Email confirm succesfully" });
   } catch (error) {
     next(error);
   }
 }
 
-export default { register, login, logout, getUser, updateAvatar, getAvatar };
+async function resendVerify(req, res, next) {
+  const { email } = req.body;
+
+  try {
+    const verificationToken = crypto.randomUUID();
+
+    const user = await User.findOneAndUpdate(
+      { email },
+      { verificationToken },
+      { new: true }
+    );
+
+    if (!user) {
+      return next(HttpError(404, "User not found"));
+    }
+
+    if (user.verify) {
+      return next(HttpError(400, "Verification has already been passed"));
+    }
+
+    await sendMail({
+      to: email,
+      from: "valera.izhyk@gmail.com",
+      subject: "Confirm your account!",
+      html: `To confirm your email,please click on the <a href="http://localhost:3000/users/verify/${verificationToken}">link</a>`,
+      text: `To confirm your email please open the link http://localhost:3000/users/verify/${verificationToken}`,
+    });
+
+    res.status(201).json({ message: " Verification email sent" });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export default {
+  updateAvatar,
+  getAvatar,
+  verify,
+  resendVerify,
+};
