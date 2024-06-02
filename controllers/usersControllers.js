@@ -99,6 +99,10 @@ async function getUser(req, res, next) {
 
 async function updateAvatar(req, res, next) {
   try {
+    if (!req.file) {
+      throw HttpError(400, "File not found");
+    }
+
     const publicDir = path.resolve("public/avatars", req.file.filename);
 
     await fs.rename(req.file.path, publicDir);
